@@ -107,3 +107,7 @@ Run the test suite with:
 ```
 make test
 ```
+
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for planned features and maintenance work.
