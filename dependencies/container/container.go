@@ -1,6 +1,7 @@
 package container
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -48,7 +49,7 @@ func (c Container) IsResolved(entrypoint entry.EntrypointInterface) (bool, error
 	if myPodName == "" {
 		return false, fmt.Errorf(PodNameNotSetError)
 	}
-	pod, err := entrypoint.Client().Pods(env.GetBaseNamespace()).Get(myPodName, metav1.GetOptions{})
+	pod, err := entrypoint.Client().Pods(env.GetBaseNamespace()).Get(context.TODO(), myPodName, metav1.GetOptions{})
 	if err != nil {
 		return false, err
 	}

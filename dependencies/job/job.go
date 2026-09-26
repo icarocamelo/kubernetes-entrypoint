@@ -1,6 +1,7 @@
 package job
 
 import (
+	"context"
 	"fmt"
 
 	entry "github.com/stackanetes/kubernetes-entrypoint/entrypoint"
@@ -47,10 +48,11 @@ func NewJob(name string, namespace string, labels map[string]string) *Job {
 
 func (j Job) IsResolved(entrypoint entry.EntrypointInterface) (bool, error) {
 	iface := entrypoint.Client().Jobs(j.namespace)
+	ctx := context.TODO()
 	var jobs []v1.Job
 
 	if j.name != "" {
-		job, err := iface.Get(j.name, metav1.GetOptions{})
+		job, err := iface.Get(ctx, j.name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -59,7 +61,7 @@ func (j Job) IsResolved(entrypoint entry.EntrypointInterface) (bool, error) {
 		labelSelector := &metav1.LabelSelector{MatchLabels: j.labels}
 		label := metav1.FormatLabelSelector(labelSelector)
 		opts := metav1.ListOptions{LabelSelector: label}
-		jobList, err := iface.List(opts)
+		jobList, err := iface.List(ctx, opts)
 		if err != nil {
 			return false, err
 		}

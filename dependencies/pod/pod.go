@@ -1,6 +1,7 @@
 package pod
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -50,7 +51,8 @@ func NewPod(labels map[string]string, namespace string, requireSameNode bool) (*
 }
 
 func (p Pod) IsResolved(entrypoint entry.EntrypointInterface) (bool, error) {
-	myPod, err := entrypoint.Client().Pods(env.GetBaseNamespace()).Get(p.podName, metav1.GetOptions{})
+	ctx := context.TODO()
+	myPod, err := entrypoint.Client().Pods(env.GetBaseNamespace()).Get(ctx, p.podName, metav1.GetOptions{})
 	if err != nil {
 		return false, fmt.Errorf("Getting POD: %v failed : %v", p.podName, err)
 	}
@@ -60,7 +62,7 @@ func (p Pod) IsResolved(entrypoint entry.EntrypointInterface) (bool, error) {
 	label := metav1.FormatLabelSelector(labelSelector)
 	opts := metav1.ListOptions{LabelSelector: label}
 
-	matchingPodList, err := entrypoint.Client().Pods(p.namespace).List(opts)
+	matchingPodList, err := entrypoint.Client().Pods(p.namespace).List(ctx, opts)
 	if err != nil {
 		return false, err
 	}

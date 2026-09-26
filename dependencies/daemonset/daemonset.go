@@ -1,6 +1,7 @@
 package daemonset
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -49,7 +50,8 @@ func NewDaemonset(name string, namespace string) (*Daemonset, error) {
 
 func (d Daemonset) IsResolved(entrypoint entry.EntrypointInterface) (bool, error) {
 	var myPodName string
-	daemonset, err := entrypoint.Client().DaemonSets(d.namespace).Get(d.name, metav1.GetOptions{})
+	ctx := context.TODO()
+	daemonset, err := entrypoint.Client().DaemonSets(d.namespace).Get(ctx, d.name, metav1.GetOptions{})
 
 	if err != nil {
 		return false, err
@@ -58,12 +60,12 @@ func (d Daemonset) IsResolved(entrypoint entry.EntrypointInterface) (bool, error
 	label := metav1.FormatLabelSelector(daemonset.Spec.Selector)
 	opts := metav1.ListOptions{LabelSelector: label}
 
-	daemonsetPods, err := entrypoint.Client().Pods(d.namespace).List(opts)
+	daemonsetPods, err := entrypoint.Client().Pods(d.namespace).List(ctx, opts)
 	if err != nil {
 		return false, err
 	}
 
-	myPod, err := entrypoint.Client().Pods(env.GetBaseNamespace()).Get(d.podName, metav1.GetOptions{})
+	myPod, err := entrypoint.Client().Pods(env.GetBaseNamespace()).Get(ctx, d.podName, metav1.GetOptions{})
 	if err != nil {
 		return false, fmt.Errorf("Getting POD: %v failed : %v", myPodName, err)
 	}
