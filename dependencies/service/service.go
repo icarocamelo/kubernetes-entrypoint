@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 
 	entry "github.com/stackanetes/kubernetes-entrypoint/entrypoint"
@@ -35,7 +36,7 @@ func NewService(name string, namespace string) Service {
 }
 
 func (s Service) IsResolved(entrypoint entry.EntrypointInterface) (bool, error) {
-	e, err := entrypoint.Client().Endpoints(s.namespace).Get(s.name, metav1.GetOptions{})
+	e, err := entrypoint.Client().Endpoints(s.namespace).Get(context.TODO(), s.name, metav1.GetOptions{})
 	if err != nil {
 		return false, err
 	}

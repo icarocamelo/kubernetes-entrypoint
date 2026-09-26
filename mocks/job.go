@@ -1,12 +1,14 @@
 package mocks
 
 import (
+	"context"
 	"fmt"
 
 	v1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
+	applyconfigurationsbatchv1 "k8s.io/client-go/applyconfigurations/batch/v1"
 	v1batch "k8s.io/client-go/kubernetes/typed/batch/v1"
 )
 
@@ -20,7 +22,7 @@ const (
 type jClient struct {
 }
 
-func (j jClient) Get(name string, opts metav1.GetOptions) (*v1.Job, error) {
+func (j jClient) Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.Job, error) {
 	if name == SucceedingJobName {
 		return &v1.Job{
 			Status: v1.JobStatus{Succeeded: 1},
@@ -33,17 +35,17 @@ func (j jClient) Get(name string, opts metav1.GetOptions) (*v1.Job, error) {
 	}
 	return nil, fmt.Errorf("Mock job didnt work")
 }
-func (j jClient) Create(job *v1.Job) (*v1.Job, error) {
+func (j jClient) Create(ctx context.Context, job *v1.Job, opts metav1.CreateOptions) (*v1.Job, error) {
 	return nil, fmt.Errorf("Not implemented")
 }
 
-func (j jClient) Delete(name string, opts *metav1.DeleteOptions) error {
+func (j jClient) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return fmt.Errorf("Not implemented")
 }
-func (j jClient) DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+func (j jClient) DeleteCollection(ctx context.Context, options metav1.DeleteOptions, listOptions metav1.ListOptions) error {
 	return fmt.Errorf("Not implemented")
 }
-func (j jClient) List(options metav1.ListOptions) (*v1.JobList, error) {
+func (j jClient) List(ctx context.Context, options metav1.ListOptions) (*v1.JobList, error) {
 	var jobs []v1.Job
 	if options.LabelSelector == fmt.Sprintf("name=%s", SucceedingJobLabel) {
 		jobs = []v1.Job{NewJob(1)}
@@ -57,21 +59,30 @@ func (j jClient) List(options metav1.ListOptions) (*v1.JobList, error) {
 	}, nil
 }
 
-func (j jClient) Update(job *v1.Job) (*v1.Job, error) {
+func (j jClient) Update(ctx context.Context, job *v1.Job, opts metav1.UpdateOptions) (*v1.Job, error) {
 	return nil, fmt.Errorf("Not implemented")
 }
 
-func (j jClient) UpdateStatus(job *v1.Job) (*v1.Job, error) {
+func (j jClient) UpdateStatus(ctx context.Context, job *v1.Job, opts metav1.UpdateOptions) (*v1.Job, error) {
 	return nil, fmt.Errorf("Not implemented")
 }
 
-func (j jClient) Watch(options metav1.ListOptions) (watch.Interface, error) {
+func (j jClient) Watch(ctx context.Context, options metav1.ListOptions) (watch.Interface, error) {
 	return nil, fmt.Errorf("Not implemented")
 }
 
-func (j jClient) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Job, err error) {
+func (j jClient) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.Job, err error) {
 	return nil, fmt.Errorf("Not implemented")
 }
+
+func (j jClient) Apply(ctx context.Context, job *applyconfigurationsbatchv1.JobApplyConfiguration, opts metav1.ApplyOptions) (result *v1.Job, err error) {
+	return nil, fmt.Errorf("Not implemented")
+}
+
+func (j jClient) ApplyStatus(ctx context.Context, job *applyconfigurationsbatchv1.JobApplyConfiguration, opts metav1.ApplyOptions) (result *v1.Job, err error) {
+	return nil, fmt.Errorf("Not implemented")
+}
+
 func NewJClient() v1batch.JobInterface {
 	return jClient{}
 }
