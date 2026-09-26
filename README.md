@@ -1,12 +1,5 @@
 # Kubernetes Entrypoint
 
-[![Build Status](https://api.travis-ci.org/stackanetes/kubernetes-entrypoint.svg?branch=master "Build Status")](https://travis-ci.org/stackanetes/kubernetes-entrypoint)
-[![Container Repository on Quay](https://quay.io/repository/stackanetes/kubernetes-entrypoint/status "Container Repository on Quay")](https://quay.io/repository/stackanetes/kubernetes-entrypoint)
-[![Go Report Card](https://goreportcard.com/badge/stackanetes/kubernetes-entrypoint "Go Report Card")](https://goreportcard.com/report/stackanetes/kubernetes-entrypoint)
-
-
-============
-
 Kubernetes-entrypoint enables complex deployments on top of Kubernetes.
 
 ## Overview
@@ -24,23 +17,18 @@ There is only one required environment variable `COMMAND` which specifies a comm
 
 `COMMAND="sleep inf"`
 
-## Latest features
-
-Extending functionality of kubernetes-entrypoint by adding an ability to specify dependencies in different namespaces. The new format for writing dependencies is `namespace:name`, with the exception of pod dependencies (which use JSON).
-In order to ensure backward compatibility, if `namespace` is omitted, it is assumed that dependencies are running in the same namespace as kubernetes-entrypoint, just like in previous versions.
-This feature is not implemented for Container, Config or Socket dependency because the different namespace is irrelevant for those cases.
-
-For instance:
-`
-DEPENDENCY_SERVICE=mysql:mariadb,keystone-api
-`
-
-The new entrypoint will resolve mariadb in the mysql namespace and keystone-api in the same namespace as kubernetes-entrypoint was deployed in.
-
 ## Supported types of dependencies
 
 All dependencies are passed as environment variables with the format `DEPENDENCY_<NAME>`, delimited by a colon.
-For dependencies to be effective please use [readiness probes](http://kubernetes.io/docs/user-guide/production-pods/#liveness-and-readiness-probes-aka-health-checks) for all containers.
+For dependencies to be effective please use [readiness probes](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/) for all containers.
+
+Most dependencies also support specifying a namespace using the `namespace:name` format. If `namespace` is omitted, the dependency is assumed to be running in the same namespace as kubernetes-entrypoint. This is not supported for the Container, Config, or Socket dependencies, since a different namespace is irrelevant for those cases.
+
+For instance:
+
+`DEPENDENCY_SERVICE=mysql:mariadb,keystone-api`
+
+resolves `mariadb` in the `mysql` namespace and `keystone-api` in the same namespace as kubernetes-entrypoint was deployed in.
 
 ### Service
 Checks whether given kubernetes service has at least one endpoint.
@@ -50,29 +38,27 @@ Example:
 
 ### Container
 Within a pod composed of multiple containers, kubernetes-entrypoint waits for the containers specified by their names to start.
-This dependency requires a `POD_NAME` environment variable which can be easily passed through the [downward api](http://kubernetes.io/docs/user-guide/downward-api/).
+This dependency requires a `POD_NAME` environment variable which can be easily passed through the [downward API](https://kubernetes.io/docs/concepts/workloads/pods/downward-api/).
 Example:
 
 `DEPENDENCY_CONTAINER=nova-libvirt,virtlogd`
 
 ### Daemonset
-Checks if a specified daemonset is already running on the same host
-This dependency requires a `POD_NAME` environment variable which can be easily passed through the [downward api](http://kubernetes.io/docs/user-guide/downward-api/).
+Checks if a specified daemonset is already running on the same host.
+This dependency requires a `POD_NAME` environment variable which can be easily passed through the [downward API](https://kubernetes.io/docs/concepts/workloads/pods/downward-api/).
 The `POD_NAME` variable is mandatory and is used to resolve dependencies.
 Example:
 
 `DEPENDENCY_DAEMONSET=openvswitch-agent`
 
-A simple example of how to use downward API to get `POD_NAME` can be found [here](https://raw.githubusercontent.com/kubernetes/kubernetes.github.io/master/docs/user-guide/downward-api/dapi-pod.yaml).
-
 ### Job
 Checks if a given job or set of jobs with matching name and/or labels succeeded at least once.
 In order to use labels, `DEPENDENCY_JOBS_JSON` must be used.
-DEPENDENCY_JOBS is supported as well for backward compatibility.
+`DEPENDENCY_JOBS` is supported as well for backward compatibility.
 Examples:
 
 `DEPENDENCY_JOBS_JSON='[{"namespace": "foo", "name": "nova-init"}, {"labels": {"initializes": "neutron"}}]'`
-`DEPENDENCY_JOBS=nova-init,neutron-init'`
+`DEPENDENCY_JOBS=nova-init,neutron-init`
 
 ### Config
 This dependency performs a container level templating of configuration files. It can template an ip address `{{ .IP }}` and hostname `{{ .HOSTNAME }}`.
@@ -82,7 +68,7 @@ Example:
 
 `DEPENDENCY_CONFIG=/etc/nova/nova.conf`
 
-Kubernetes-entrypoint will look for the configuration file `/configmaps/nova.conf/nova.conf`, template the `{{ .IP }} and {{ .HOSTNAME }}` tags, and then save the file as `/etc/nova/nova.conf`.
+Kubernetes-entrypoint will look for the configuration file `/configmaps/nova.conf/nova.conf`, template the `{{ .IP }}` and `{{ .HOSTNAME }}` tags, and then save the file as `/etc/nova/nova.conf`.
 
 ### Socket
 Checks whether a given file exists and that the container has rights to read it.
@@ -93,18 +79,35 @@ Example:
 ### Pod
 Checks if at least one pod matching the specified labels is already running, by default anywhere in the cluster, or use `"requireSameNode": true` to require a pod on the same node.
 Labels are specified using JSON, as seen in the example below.
-This dependency requires a `POD_NAME` env which can be easily passed through the [downward api](http://kubernetes.io/docs/user-guide/downward-api/).
+This dependency requires a `POD_NAME` env which can be easily passed through the [downward API](https://kubernetes.io/docs/concepts/workloads/pods/downward-api/).
 The `POD_NAME` variable is mandatory and is used to resolve dependencies.
 Example:
 
 `DEPENDENCY_POD_JSON='[{"namespace": "foo", "labels": {"k1": "v1", "k2": "v2"}}, {"labels": {"k1": "v1", "k2": "v2"}, "requireSameNode": true}]'`
 
-## Image
+## Building
 
-Build process for image is triggered after each commit.
-Can be found [here](https://quay.io/repository/stackanetes/kubernetes-entrypoint?tab=tags), and pulled by executing:
-`docker pull quay.io/stackanetes/kubernetes-entrypoint:v0.1.0`
+Kubernetes-entrypoint is built with Go modules and requires Go 1.26 or later (see `go.mod`).
 
-## Examples
+Build a binary for your platform:
 
-[Stackanetes](http://github.com/stackanetes/stackanetes) uses kubernetes-entrypoint to manage dependencies when deploying OpenStack on Kubernetes.
+```
+go build -o kubernetes-entrypoint .
+```
+
+Or use the provided `Makefile` targets to cross-compile for Linux amd64/arm64:
+
+```
+make linux-amd64
+make linux-arm64
+```
+
+Run the test suite with:
+
+```
+make test
+```
+
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for planned features and maintenance work.
